@@ -30,8 +30,8 @@ const node_session_secret = process.env.NODE_SESSION_SECRET;
 var { database } = include("databaseConnection");
 
 const userCollection = database.db(mongodb_database).collection("users");
-db.getCollection("users").find({});
-await db.getCollection("users").updateOne({username: 'you'}, {$set: {user_type: 'user'}});
+// db.getCollection("users").find({});
+// await db.getCollection("users").updateOne({username: 'you'}, {$set: {user_type: 'user'}});
 
 app.set("view engine", "ejs");
 
@@ -72,6 +72,11 @@ app.get("/", (req, res) => {
     <button onclick="window.location.href='/logout'">Log out</button>
     </div>
     `);
+});
+
+app.get("/admin", async (req, res) => {
+  const result = await userCollection.find().project({username:1, _id: 1});
+  res.render("admin", {users: result});
 });
 
 app.get("/login", (req, res) => {
