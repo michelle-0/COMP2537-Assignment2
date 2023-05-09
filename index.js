@@ -217,15 +217,6 @@ app.post("/loggingin", async (req, res) => {
   }
 });
 
-// app.post("/promoteUser/:username", async (req, res) => {
-//   const { username } = req.params;
-
-//     await userCollection.updateOne(
-//       { username: username },
-//       { $set: { user_type: "admin" } }
-//     );
-// });
-
 app.get("/promote", async (req, res) => {
   const {username} = req.query; // Retrieve the 'username' from the query parameters
   console.log(username);
