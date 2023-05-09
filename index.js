@@ -53,30 +53,55 @@ app.use(
   })
 );
 
+function isValidSession(req) {
+  if (req.session.authenticated) {
+    return true;
+  }
+  return false;
+}
+
+function sessionValidation(req, res, next) {
+  if (isValidSession(req)) {
+    next();
+  } else {
+    res.redirect("/login");
+  }
+}
+
+function isAdmin(req) {
+  if (req.session.user_type == "admin") {
+    return true;
+  }
+  return false;
+}
+
+function adminAuthorization(req, res, next) {
+  if (!isAdmin(req)) {
+    res.status(403);
+    res.render("errorMessage");
+    return;
+  } else {
+    next();
+  }
+}
+
+app.get("/home", (req, res) => {
+    res.render("home");
+    return;
+})
+
 app.get("/", (req, res) => {
   if (!req.session.username) {
-    res.send(`
-      <div>
-        <button onclick="window.location.href='/signup'">Sign up</button><br>
-        <button onclick="window.location.href='/login'">Log in</button>
-      </div>
-    `);
+    res.render("home");
     return;
   }
   var username = req.session.username;
-  res.send(`
-    <div>
-    Hello, ${username}!<br>
-    <button onclick="window.location.href='/members'">Go to Members Area</button>
-    <br>
-    <button onclick="window.location.href='/logout'">Log out</button>
-    </div>
-    `);
+  res.render("main", {username: username});
 });
 
-app.get("/admin", async (req, res) => {
-  const result = await userCollection.find().project({username:1, _id: 1});
-  res.render("admin", {users: result});
+app.get("/admin", sessionValidation, adminAuthorization, async (req, res) => {
+    const result = await userCollection.find().project({username:1, user_type: 1}).toArray();
+    res.render("admin", {users: result});
 });
 
 app.get("/login", (req, res) => {
@@ -125,7 +150,7 @@ app.post("/submitUser", async (req, res) => {
 
   var hashedPassword = await bcrypt.hash(password, saltRounds);
 
-  await userCollection.insertOne({ username, email, password: hashedPassword });
+  await userCollection.insertOne({ username, email, password: hashedPassword, user_type: "user"});
   console.log("Inserted user");
   req.session.authenticated = true;
   req.session.username = username;
@@ -144,6 +169,7 @@ app.get("/members", (req, res) => {
   var random = Math.floor(Math.random() * 3) + 1;
   res.render("members", { username: username, random: random });
 });
+app.use("/admin", sessionValidation);
 
 app.post("/loggingin", async (req, res) => {
   var email = req.body.email;
@@ -162,7 +188,7 @@ app.post("/loggingin", async (req, res) => {
 
   const result = await userCollection
     .find({ email: email })
-    .project({ username: 1, email: 1, password: 1, _id: 1 })
+    .project({ username: 1, email: 1, password: 1, user_type: 1, _id: 1 })
     .toArray();
 
   console.log(result);
@@ -176,8 +202,10 @@ app.post("/loggingin", async (req, res) => {
     req.session.authenticated = true;
     req.session.username = result[0].username;
     req.session.email = email;
+    req.session.user_type = result[0].user_type;
     req.session.cookie.maxAge = expireTime;
     console.log("username: " + req.session.username);
+    console.log("usertype:" + req.session.user_type);
     res.redirect("/members");
     return;
   } else {
@@ -189,6 +217,40 @@ app.post("/loggingin", async (req, res) => {
   }
 });
 
+// app.post("/promoteUser/:username", async (req, res) => {
+//   const { username } = req.params;
+
+//     await userCollection.updateOne(
+//       { username: username },
+//       { $set: { user_type: "admin" } }
+//     );
+// });
+
+app.get("/promote", async (req, res) => {
+  const {username} = req.query; // Retrieve the 'username' from the query parameters
+  console.log(username);
+
+  await userCollection.updateOne(
+    { username: username },
+    { $set: { user_type: "admin" } }
+  );
+
+  res.render("promote");
+});
+
+app.get("/demote", async (req, res) => {
+  const { username } = req.query; // Retrieve the 'username' from the query parameters
+  console.log(username);
+
+  await userCollection.updateOne(
+    { username: username },
+    { $set: { user_type: "user" } }
+  );
+
+  res.render("demote");
+});
+
+
 app.get("/logout", (req, res) => {
   req.session.destroy();
   res.render("logout");
@@ -196,9 +258,18 @@ app.get("/logout", (req, res) => {
 
 app.use(express.static(__dirname + "/public"));
 
+// app.get("/admin", sessionValidation, adminAuthorization, async (req, res) => {
+//   const result = await userCollection
+//     .find()
+//     .project({ username: 1, _id: 1 })
+//     .toArray();
+
+//   res.render("admin", { users: result });
+// });
+
 app.get("*", (req, res) => {
   res.status(404);
-  res.send("Page not found - 404");
+  res.render("notFound");
 });
 
 app.listen(port, () => {

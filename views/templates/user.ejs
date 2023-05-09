@@ -1,1 +1,5 @@
-<li><%= user.username %></li>
+<div class="d-flex gap-2 justify-content-left py-4">
+    <li style="font-size: larger;">
+        <%= user.username%> (<span class="user-type"><%= user.user_type %></span>)
+        <a class="btn btn-primary rounded-pill px-3" type="button" href="/promote?username=<%= user.username %>">Promote to Admin</a> <a class="btn btn-danger rounded-pill px-3" type="button" href="/demote?username=<%= user.username %>">Demote to User</a></li>
+    </div>

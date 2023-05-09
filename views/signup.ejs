@@ -1,9 +1,24 @@
 <%- include("templates/header") %> 
-create user
-<form action='/submitUser' method='post'>
-<input name='username' type='text' placeholder='name'><br>
-<input name='email' type='email' placeholder='email'><br>
-<input name='password' type='password' placeholder='password'><br>
-<button>Submit</button>
-</form>
-<%- include("templates/footer") %> 
+<main class="form-signin w-100 m-auto">
+    <div class="d-flex gap-2 justify-content-center py-5">
+<form class="text-center" action='/submitUser' method='post'>
+    <img class="mb-4" src="mocha.webp" alt="" width="120" height="120">
+    <h1 class="h3 mb-3 fw-normal">Sign Up</h1>
+    <div class="form-floating">
+      <input name="username" type="text" class="form-control" id="floatingInput" placeholder="username">
+      <label for="floatingInput">Username</label>
+    </div>
+    <div class="form-floating">
+      <input name="email" type="email" class="form-control" id="floatingInput" placeholder="email">
+      <label for="floatingInput">Email</label>
+    </div>
+    <div class="form-floating">
+      <input name="password" type="password" class="form-control" id="floatingPassword" placeholder="password">
+      <label for="floatingPassword">Password</label>
+    </div>
+    <button class="w-100 btn btn-lg btn-primary">Submit</button>
+    <p class="mt-5 mb-3 text-body-secondary">COMP2537 Assignment2</p>
+  </form>
+  </div>
+  </main>
+  <%- include("templates/footer") %> 
